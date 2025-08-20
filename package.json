@@ -1,0 +1,27 @@
+{
+  "name": "dir-traversal-no-recursion",
+  "version": "0.1.0",
+  "description": "Directory traversal without recursion (and a recursive baseline) with tests and benchmarks",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "vitest run --reporter=default",
+    "bench": "node scripts/bench.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "keywords": [
+    "filesystem",
+    "traversal",
+    "non-recursive",
+    "recursive",
+    "benchmark"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^1.6.0"
+  }
+}
+
