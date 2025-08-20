@@ -118,6 +118,7 @@ function buildHtml(report) {
   const json = JSON.stringify(report);
   const includedTargets = report.scenarios.filter(s => !s.skipped).map(s => s.targetDirs.toLocaleString()).join(', ');
   const skippedTargets = report.scenarios.filter(s => s.skipped).map(s => s.targetDirs.toLocaleString()).join(', ') || 'none';
+  const repoUrl = process.env.REPO_URL || 'https://github.com/TheSeanLavery/DirTraversalNoRecursion';
   return `<!doctype html>
 <html>
   <head>
@@ -141,7 +142,10 @@ function buildHtml(report) {
   </head>
   <body>
     <h2>Directory Traversal Report</h2>
-    <p>Generated at <code>${report.generatedAt}</code>, runs per scenario: <code>${report.runsPerScenario}</code></p>
+    <p>
+      Generated at <code>${report.generatedAt}</code>, runs per scenario: <code>${report.runsPerScenario}</code> ·
+      Repository: <a href="${repoUrl}" target="_blank" rel="noopener noreferrer">${repoUrl}</a>
+    </p>
     <h3>What this demonstrates</h3>
     <p>
       This report compares a <b>non-recursive</b> directory traversal with a <b>recursive</b> baseline.
