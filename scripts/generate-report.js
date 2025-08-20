@@ -17,9 +17,24 @@ function parseArgs() {
   return out;
 }
 
+// Pseudo-random helper with seed for deterministic structure generation
+function createSeededRandom(seed) {
+  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+  return function rand() {
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    const t = (h1 ^ h2) >>> 0;
+    return (t % 100000) / 100000;
+  };
+}
+
 async function createTreeToTargetDirs(baseDir, targetDirs, options = {}) {
   const maxDepth = options.maxDepth ?? 10;
   const maxFilesPerDir = options.maxFilesPerDir ?? 2;
+  const seed = options.seed ?? 123456;
+  const rand = createSeededRandom(seed);
   let createdDirs = 0; // count of subdirectories created (excluding base)
   let currentLevelDirs = [baseDir];
   let depth = 0;
@@ -28,9 +43,11 @@ async function createTreeToTargetDirs(baseDir, targetDirs, options = {}) {
     const nextLevel = [];
     for (const dir of currentLevelDirs) {
       if (createdDirs >= targetDirs) break;
-      // Aim to evenly distribute remaining directories over current level
+      // Distribute remaining directories but perturb with deterministic randomness
       const remaining = targetDirs - createdDirs;
-      const perDirTarget = Math.max(1, Math.ceil(remaining / currentLevelDirs.length));
+      const basePerDir = Math.max(1, Math.ceil(remaining / currentLevelDirs.length));
+      const jitter = Math.floor(rand() * Math.min(8, basePerDir));
+      const perDirTarget = Math.max(1, basePerDir - jitter);
       const maxPerDir = Math.min(perDirTarget, 1000); // safety cap per directory
       const toCreate = Math.min(maxPerDir, remaining);
 
@@ -43,7 +60,8 @@ async function createTreeToTargetDirs(baseDir, targetDirs, options = {}) {
       }
 
       // Create a few tiny files to make traversal non-trivial
-      for (let f = 0; f < maxFilesPerDir; f++) {
+      const filesHere = Math.max(1, Math.floor(rand() * (maxFilesPerDir + 1)));
+      for (let f = 0; f < filesHere; f++) {
         const fp = path.join(dir, `f_${depth}_${f}.txt`);
         await writeFile(fp, `${depth}:${f}`);
       }
@@ -70,7 +88,8 @@ async function runScenario(targetDirs, runs, allowHuge) {
   for (let i = 0; i < runs; i++) {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'walk-report-'));
     try {
-      await createTreeToTargetDirs(tmp, targetDirs, { maxDepth: 10, maxFilesPerDir: 2 });
+      // Use a deterministic seed per scenario+iteration so both traversals see the same tree
+      await createTreeToTargetDirs(tmp, targetDirs, { maxDepth: 10, maxFilesPerDir: 2, seed: 1000 + targetDirs + i });
 
       let filesNR = 0;
       const t1s = performance.now();
@@ -132,11 +151,12 @@ function buildHtml(report) {
     </p>
     <h3>Testing methodology</h3>
     <p>
-      For each scenario we synthesize a directory tree targeting a given number of subdirectories
-      (included targets: <code>${includedTargets}</code>; skipped: <code>${skippedTargets}</code>), with up to 10 levels and a couple of small files per directory.
-      For each run, both implementations traverse the same tree and invoke a no-op <code>onFile</code> callback for each file.
-      We time just the traversal using high-resolution timers and aggregate <b>mean</b>, <b>median</b>, and <b>p95</b> statistics across runs.
-      Temporary trees are cleaned up after each run.
+      For each scenario we synthesize a deterministic directory tree targeting a given number of subdirectories
+      (included targets: <code>${includedTargets}</code>; skipped: <code>${skippedTargets}</code>), up to 10 levels deep with a few small files per directory.
+      A seeded pseudo-random generator controls branching and file counts so the structure is reproducible.
+      In every run, both implementations traverse the <b>same</b> tree instance and invoke a no-op <code>onFile</code> for each file.
+      We measure traversal time with high-resolution timers and aggregate <b>mean</b>, <b>median</b>, and <b>p95</b> statistics across runs.
+      Each temporary tree is deleted after timing to keep the environment clean.
     </p>
     <h3>Interpreting the charts</h3>
     <p>

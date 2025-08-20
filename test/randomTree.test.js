@@ -62,7 +62,8 @@ describe('random tree traversal parity', () => {
   let tmp;
   beforeAll(async () => {
     tmp = await mkdtemp(path.join(os.tmpdir(), 'walk-nr-'));
-    await createRandomTree(tmp, { maxLayers: 10, maxDirsPerLayer: 100, maxFilesPerDir: 3 });
+    // Use a fixed seed so the directory structure is deterministic across runs
+    await createRandomTree(tmp, { maxLayers: 10, maxDirsPerLayer: 100, maxFilesPerDir: 3, seed: 12345 });
   }, 120000);
 
   afterAll(async () => {
