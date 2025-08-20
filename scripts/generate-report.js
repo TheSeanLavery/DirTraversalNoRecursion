@@ -137,6 +137,7 @@ function buildHtml(report) {
       p { margin: 6px 0 12px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   </head>
   <body>
     <h2>Directory Traversal Report</h2>
@@ -161,9 +162,9 @@ function buildHtml(report) {
     <h3>Interpreting the charts</h3>
     <p>
       The left chart compares <b>mean</b> durations; the right chart compares <b>median</b> durations across scenarios.
-      Green represents <b>Non-Recursive</b>, blue represents <b>Recursive</b>. The summary table shows mean/median/p95
-      values per scenario. Because data is generated randomly within constraints, absolute values vary per report,
-      but the relative behavior typically remains: non-recursive is at least on par and often edges out recursive.
+      Green represents <b>Non-Recursive</b>, blue represents <b>Recursive</b>. Numeric values are rendered above bars/points for readability.
+      Because the directory structure per scenario and iteration is generated using a <b>deterministic seeded RNG</b>,
+      results are <b>reproducible</b> and <b>fair</b> across both methods in each run. Absolute values will remain stable for a given report.
     </p>
     <div class="grid">
       <div>
@@ -191,6 +192,16 @@ function buildHtml(report) {
       const nrMed = scenarios.map(s => s.summary.nonRecursive.median);
       const rMed = scenarios.map(s => s.summary.recursive.median);
 
+      // Register DataLabels plugin
+      Chart.register(ChartDataLabels);
+      const sharedDatalabels = {
+        color: '#111',
+        anchor: 'end',
+        align: 'top',
+        clamp: true,
+        formatter: (v) => (typeof v === 'number' ? v.toFixed(2) : v)
+      };
+
       const ctx1 = document.getElementById('meanChart');
       new Chart(ctx1, {
         type: 'bar',
@@ -201,7 +212,11 @@ function buildHtml(report) {
             { label: 'Recursive (mean)', backgroundColor: '#2196F3', data: rMean }
           ]
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: { 
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          plugins: { datalabels: sharedDatalabels }
+        }
       });
 
       const ctx2 = document.getElementById('medianChart');
@@ -214,7 +229,11 @@ function buildHtml(report) {
             { label: 'Recursive (median)', borderColor: '#2196F3', data: rMed }
           ]
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: { 
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          plugins: { datalabels: Object.assign({}, sharedDatalabels, { align: 'top', anchor: 'end' }) }
+        }
       });
 
       const tbody = document.querySelector('#summaryTable tbody');
