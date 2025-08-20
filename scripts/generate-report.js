@@ -7,7 +7,7 @@ import { walkDirsRecursive } from '../src/walkDirsRecursive.js';
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const out = { runs: 50, allowHuge: false, outDir: 'reports', scenarios: [10, 100, 1000, 10000, 100000, 1000000] };
+  const out = { runs: 5, allowHuge: false, outDir: 'reports', scenarios: [10, 100, 1000, 10000, 100000, 1000000] };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--runs' && args[i + 1]) { out.runs = Number(args[++i]); }
@@ -174,13 +174,13 @@ function buildHtml(report) {
       for (const s of scenarios) {
         const tr = document.createElement('tr');
         const c = s.summary;
-        tr.innerHTML = `<td>${s.targetDirs.toLocaleString()}</td>` +
-          `<td>${c.nonRecursive.mean.toFixed(2)}</td>` +
-          `<td>${c.nonRecursive.median.toFixed(2)}</td>` +
-          `<td>${c.nonRecursive.p95.toFixed(2)}</td>` +
-          `<td>${c.recursive.mean.toFixed(2)}</td>` +
-          `<td>${c.recursive.median.toFixed(2)}</td>` +
-          `<td>${c.recursive.p95.toFixed(2)}</td>`;
+        tr.innerHTML = '<td>' + s.targetDirs.toLocaleString() + '</td>' +
+          '<td>' + c.nonRecursive.mean.toFixed(2) + '</td>' +
+          '<td>' + c.nonRecursive.median.toFixed(2) + '</td>' +
+          '<td>' + c.nonRecursive.p95.toFixed(2) + '</td>' +
+          '<td>' + c.recursive.mean.toFixed(2) + '</td>' +
+          '<td>' + c.recursive.median.toFixed(2) + '</td>' +
+          '<td>' + c.recursive.p95.toFixed(2) + '</td>';
         tbody.appendChild(tr);
       }
     </script>

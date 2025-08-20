@@ -28,8 +28,8 @@ Generate a random tree, traverse with both implementations, and write a JSON rep
 npm run bench
 ```
 
-### Bulk report (50 runs per scenario)
-Runs 50 iterations across scenarios of target directory counts: 10, 100, 1k, 10k, 100k, 1m (the largest are skipped unless you pass `--allow-huge`). Produces both JSON and a self-contained HTML with charts (Chart.js) in `reports/`.
+### Bulk report (5 runs per scenario)
+Runs 5 iterations across scenarios of target directory counts: 10, 100, 1k, 10k, 100k, 1m (the largest are skipped unless you pass `--allow-huge`). Produces both JSON and a self-contained HTML with charts (Chart.js) in `reports/`.
 ```bash
 npm run report              # default (skips huge scenarios)
 npm run report -- --allow-huge   # include 100k and 1m scenarios

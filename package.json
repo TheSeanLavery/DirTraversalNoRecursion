@@ -7,7 +7,7 @@
   "scripts": {
     "test": "vitest run --reporter=default",
     "bench": "node scripts/bench.js",
-    "report": "node scripts/generate-report.js --runs=50"
+    "report": "node scripts/generate-report.js --runs=5"
   },
   "engines": {
     "node": ">=16"
