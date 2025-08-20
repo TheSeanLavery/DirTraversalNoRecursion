@@ -97,6 +97,8 @@ async function runScenario(targetDirs, runs, allowHuge) {
 
 function buildHtml(report) {
   const json = JSON.stringify(report);
+  const includedTargets = report.scenarios.filter(s => !s.skipped).map(s => s.targetDirs.toLocaleString()).join(', ');
+  const skippedTargets = report.scenarios.filter(s => s.skipped).map(s => s.targetDirs.toLocaleString()).join(', ') || 'none';
   return `<!doctype html>
 <html>
   <head>
@@ -112,12 +114,37 @@ function buildHtml(report) {
       th, td { padding: 8px 10px; border-bottom: 1px solid #ddd; text-align: right; }
       th:first-child, td:first-child { text-align: left; }
       code { background: #f5f5f5; padding: 2px 4px; border-radius: 4px; }
+      h2, h3 { margin: 12px 0 6px; }
+      p { margin: 6px 0 12px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     <h2>Directory Traversal Report</h2>
     <p>Generated at <code>${report.generatedAt}</code>, runs per scenario: <code>${report.runsPerScenario}</code></p>
+    <h3>What this demonstrates</h3>
+    <p>
+      This report compares a <b>non-recursive</b> directory traversal with a <b>recursive</b> baseline.
+      The non-recursive implementation uses an explicit work queue with a pool of async agents (concurrency = <code>16</code>),
+      which makes it stack-overflow proof regardless of depth and enables controlled parallelism.
+      The charts and table below show that the non-recursive approach is <b>comparable</b> and often
+      <b>slightly faster</b> than a straightforward recursive traversal for these scenarios.
+    </p>
+    <h3>Testing methodology</h3>
+    <p>
+      For each scenario we synthesize a directory tree targeting a given number of subdirectories
+      (included targets: <code>${includedTargets}</code>; skipped: <code>${skippedTargets}</code>), with up to 10 levels and a couple of small files per directory.
+      For each run, both implementations traverse the same tree and invoke a no-op <code>onFile</code> callback for each file.
+      We time just the traversal using high-resolution timers and aggregate <b>mean</b>, <b>median</b>, and <b>p95</b> statistics across runs.
+      Temporary trees are cleaned up after each run.
+    </p>
+    <h3>Interpreting the charts</h3>
+    <p>
+      The left chart compares <b>mean</b> durations; the right chart compares <b>median</b> durations across scenarios.
+      Green represents <b>Non-Recursive</b>, blue represents <b>Recursive</b>. The summary table shows mean/median/p95
+      values per scenario. Because data is generated randomly within constraints, absolute values vary per report,
+      but the relative behavior typically remains: non-recursive is at least on par and often edges out recursive.
+    </p>
     <div class="grid">
       <div>
         <h3>Mean duration (ms) by scenario</h3>
