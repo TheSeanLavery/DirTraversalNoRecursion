@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dir Traversal Report</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 20px; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+      @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+      canvas { width: 100%; height: 360px; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { padding: 8px 10px; border-bottom: 1px solid #ddd; text-align: right; }
+      th:first-child, td:first-child { text-align: left; }
+      code { background: #f5f5f5; padding: 2px 4px; border-radius: 4px; }
+      h2, h3 { margin: 12px 0 6px; }
+      p { margin: 6px 0 12px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  </head>
+  <body>
+    <h2>Directory Traversal Report</h2>
+    <p>Generated at <code>2025-08-20T19:44:25.392Z</code>, runs per scenario: <code>5</code></p>
+    <h3>What this demonstrates</h3>
+    <p>
+      This report compares a <b>non-recursive</b> directory traversal with a <b>recursive</b> baseline.
+      The non-recursive implementation uses an explicit work queue with a pool of async agents (concurrency = <code>16</code>),
+      which makes it stack-overflow proof regardless of depth and enables controlled parallelism.
+      The charts and table below show that the non-recursive approach is <b>comparable</b> and often
+      <b>slightly faster</b> than a straightforward recursive traversal for these scenarios.
+    </p>
+    <h3>Testing methodology</h3>
+    <p>
+      For each scenario we synthesize a deterministic directory tree targeting a given number of subdirectories
+      (included targets: <code>10, 100, 1,000, 10,000, 100,000</code>; skipped: <code>1,000,000</code>), up to 10 levels deep with a few small files per directory.
+      A seeded pseudo-random generator controls branching and file counts so the structure is reproducible.
+      In every run, both implementations traverse the <b>same</b> tree instance and invoke a no-op <code>onFile</code> for each file.
+      We measure traversal time with high-resolution timers and aggregate <b>mean</b>, <b>median</b>, and <b>p95</b> statistics across runs.
+      Each temporary tree is deleted after timing to keep the environment clean.
+    </p>
+    <h3>Interpreting the charts</h3>
+    <p>
+      The left chart compares <b>mean</b> durations; the right chart compares <b>median</b> durations across scenarios.
+      Green represents <b>Non-Recursive</b>, blue represents <b>Recursive</b>. Numeric values are rendered above bars/points for readability.
+      Because the directory structure per scenario and iteration is generated using a <b>deterministic seeded RNG</b>,
+      results are <b>reproducible</b> and <b>fair</b> across both methods in each run. Absolute values will remain stable for a given report.
+    </p>
+    <div class="grid">
+      <div>
+        <h3>Mean duration (ms) by scenario</h3>
+        <canvas id="meanChart"></canvas>
+      </div>
+      <div>
+        <h3>Median duration (ms) by scenario</h3>
+        <canvas id="medianChart"></canvas>
+      </div>
+    </div>
+    <h3>Summary</h3>
+    <table id="summaryTable">
+      <thead>
+        <tr><th>Target Dirs</th><th>NR mean</th><th>NR median</th><th>NR p95</th><th>R mean</th><th>R median</th><th>R p95</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <script>
+      const REPORT = {"generatedAt":"2025-08-20T19:44:25.392Z","runsPerScenario":5,"scenarios":[{"targetDirs":10,"skipped":false,"runs":[{"iteration":0,"nonRecursive":{"ms":2.983042000000001,"files":6},"recursive":{"ms":1.1054169999999992,"files":6}},{"iteration":1,"nonRecursive":{"ms":0.6895000000000024,"files":4},"recursive":{"ms":2.349415999999998,"files":4}},{"iteration":2,"nonRecursive":{"ms":1.2665000000000006,"files":4},"recursive":{"ms":1.2687499999999972,"files":4}},{"iteration":3,"nonRecursive":{"ms":0.7544589999999971,"files":6},"recursive":{"ms":6.513458,"files":6}},{"iteration":4,"nonRecursive":{"ms":0.6631670000000014,"files":4},"recursive":{"ms":1.0833749999999966,"files":4}}],"summary":{"nonRecursive":{"mean":1.2713336000000006,"median":0.7544589999999971,"p95":2.983042000000001},"recursive":{"mean":2.4640831999999984,"median":1.2687499999999972,"p95":6.513458}}},{"targetDirs":100,"skipped":false,"runs":[{"iteration":0,"nonRecursive":{"ms":5.6709590000000105,"files":8},"recursive":{"ms":7.525416000000007,"files":8}},{"iteration":1,"nonRecursive":{"ms":4.111374999999995,"files":6},"recursive":{"ms":9.221083000000007,"files":6}},{"iteration":2,"nonRecursive":{"ms":4.9926670000000115,"files":10},"recursive":{"ms":7.487916000000013,"files":10}},{"iteration":3,"nonRecursive":{"ms":3.5922920000000147,"files":8},"recursive":{"ms":6.674042000000014,"files":8}},{"iteration":4,"nonRecursive":{"ms":3.6051669999999945,"files":9},"recursive":{"ms":7.304417000000001,"files":9}}],"summary":{"nonRecursive":{"mean":4.394492000000005,"median":4.111374999999995,"p95":5.6709590000000105},"recursive":{"mean":7.642574800000008,"median":7.487916000000013,"p95":9.221083000000007}}},{"targetDirs":1000,"skipped":false,"runs":[{"iteration":0,"nonRecursive":{"ms":35.566917000000046,"files":4},"recursive":{"ms":81.57541600000002,"files":4}},{"iteration":1,"nonRecursive":{"ms":29.364125,"files":7},"recursive":{"ms":69.35791599999993,"files":7}},{"iteration":2,"nonRecursive":{"ms":23.735957999999982,"files":11},"recursive":{"ms":62.204124999999976,"files":11}},{"iteration":3,"nonRecursive":{"ms":21.085959000000003,"files":11},"recursive":{"ms":57.53254199999992,"files":11}},{"iteration":4,"nonRecursive":{"ms":21.72629100000006,"files":4},"recursive":{"ms":59.749124999999935,"files":4}}],"summary":{"nonRecursive":{"mean":26.29585000000002,"median":23.735957999999982,"p95":35.566917000000046},"recursive":{"mean":66.08382479999996,"median":62.204124999999976,"p95":81.57541600000002}}},{"targetDirs":10000,"skipped":false,"runs":[{"iteration":0,"nonRecursive":{"ms":236.86449999999968,"files":7464},"recursive":{"ms":713.8471669999999,"files":7464}},{"iteration":1,"nonRecursive":{"ms":309.9148750000004,"files":7538},"recursive":{"ms":764.3444580000005,"files":7538}},{"iteration":2,"nonRecursive":{"ms":279.20754099999976,"files":7490},"recursive":{"ms":956.2062080000014,"files":7490}},{"iteration":3,"nonRecursive":{"ms":265.3187089999992,"files":7573},"recursive":{"ms":767.9380830000009,"files":7573}},{"iteration":4,"nonRecursive":{"ms":318.6524580000005,"files":7394},"recursive":{"ms":792.278624999999,"files":7394}}],"summary":{"nonRecursive":{"mean":281.99161659999993,"median":279.20754099999976,"p95":318.6524580000005},"recursive":{"mean":798.9229082000004,"median":767.9380830000009,"p95":956.2062080000014}}},{"targetDirs":100000,"skipped":false,"runs":[{"iteration":0,"nonRecursive":{"ms":6389.220041999997,"files":52354},"recursive":{"ms":7098.893915999994,"files":52354}},{"iteration":1,"nonRecursive":{"ms":6351.083083999998,"files":52553},"recursive":{"ms":8727.000416999988,"files":52553}},{"iteration":2,"nonRecursive":{"ms":8232.147541999992,"files":52446},"recursive":{"ms":7639.6875,"files":52446}},{"iteration":3,"nonRecursive":{"ms":9473.248875000005,"files":52306},"recursive":{"ms":7880.028041999991,"files":52306}},{"iteration":4,"nonRecursive":{"ms":6413.399166999996,"files":52580},"recursive":{"ms":7736.450917000009,"files":52580}}],"summary":{"nonRecursive":{"mean":7371.819741999998,"median":6413.399166999996,"p95":9473.248875000005},"recursive":{"mean":7816.412158399997,"median":7736.450917000009,"p95":8727.000416999988}}},{"targetDirs":1000000,"skipped":true,"reason":"target too large for default run (use --allow-huge)","runs":[],"summary":null}]};
+      const scenarios = REPORT.scenarios.filter(s => !s.skipped);
+      const labels = scenarios.map(s => s.targetDirs.toLocaleString());
+      const nrMean = scenarios.map(s => s.summary.nonRecursive.mean);
+      const rMean = scenarios.map(s => s.summary.recursive.mean);
+      const nrMed = scenarios.map(s => s.summary.nonRecursive.median);
+      const rMed = scenarios.map(s => s.summary.recursive.median);
+
+      // Register DataLabels plugin
+      Chart.register(ChartDataLabels);
+      const sharedDatalabels = {
+        color: '#111',
+        anchor: 'end',
+        align: 'top',
+        clamp: true,
+        formatter: (v) => (typeof v === 'number' ? v.toFixed(2) : v)
+      };
+
+      const ctx1 = document.getElementById('meanChart');
+      new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Non-Recursive (mean)', backgroundColor: '#4CAF50', data: nrMean },
+            { label: 'Recursive (mean)', backgroundColor: '#2196F3', data: rMean }
+          ]
+        },
+        options: { 
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          plugins: { datalabels: sharedDatalabels }
+        }
+      });
+
+      const ctx2 = document.getElementById('medianChart');
+      new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Non-Recursive (median)', borderColor: '#4CAF50', data: nrMed },
+            { label: 'Recursive (median)', borderColor: '#2196F3', data: rMed }
+          ]
+        },
+        options: { 
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          plugins: { datalabels: Object.assign({}, sharedDatalabels, { align: 'top', anchor: 'end' }) }
+        }
+      });
+
+      const tbody = document.querySelector('#summaryTable tbody');
+      for (const s of scenarios) {
+        const tr = document.createElement('tr');
+        const c = s.summary;
+        tr.innerHTML = '<td>' + s.targetDirs.toLocaleString() + '</td>' +
+          '<td>' + c.nonRecursive.mean.toFixed(2) + '</td>' +
+          '<td>' + c.nonRecursive.median.toFixed(2) + '</td>' +
+          '<td>' + c.nonRecursive.p95.toFixed(2) + '</td>' +
+          '<td>' + c.recursive.mean.toFixed(2) + '</td>' +
+          '<td>' + c.recursive.median.toFixed(2) + '</td>' +
+          '<td>' + c.recursive.p95.toFixed(2) + '</td>';
+        tbody.appendChild(tr);
+      }
+    </script>
+  </body>
+</html>

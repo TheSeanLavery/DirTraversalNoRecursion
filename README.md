@@ -35,6 +35,12 @@ npm run report              # default (skips huge scenarios)
 npm run report -- --allow-huge   # include 100k and 1m scenarios
 ```
 
+### Publish latest report to GitHub Pages
+Copies the most recent `reports/report-*.html` to `docs/index.html` (and the JSON as `docs/report.json`). Enable GitHub Pages on the repository with the `docs/` folder as the source.
+```bash
+npm run pages
+```
+
 Example report fields:
 ```json
 {
